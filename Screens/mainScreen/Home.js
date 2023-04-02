@@ -1,5 +1,5 @@
 import React from "react";
-import { Image, StyleSheet, TouchableOpacity } from "react-native";
+import { Image } from "react-native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 
 const MainTabScreen = createBottomTabNavigator();
@@ -27,15 +27,16 @@ export default function MainScreen({ navigation }) {
           tabBarIcon: ({ focused, size, color }) => (
             <Image source={require("../../assets/posts.png")} />
           ),
-          title: "Публикации",
-          headerRight: () => (
-            <TouchableOpacity
-              style={styles.logOutBtn}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Image source={require("../../assets/logOut.png")} />
-            </TouchableOpacity>
-          ),
+          headerShown: false,
+          // title: "Публикации",
+          // headerRight: () => (
+          //   <TouchableOpacity
+          //     style={styles.logOutBtn}
+          //     onPress={() => navigation.navigate("Login")}
+          //   >
+          //     <Image source={require("../../assets/logOut.png")} />
+          //   </TouchableOpacity>
+          // ),
         }}
         name="Posts"
         component={PostsScreen}
@@ -66,8 +67,8 @@ export default function MainScreen({ navigation }) {
   );
 }
 
-const styles = StyleSheet.create({
-  logOutBtn: {
-    marginRight: 19,
-  },
-});
+// const styles = StyleSheet.create({
+//   logOutBtn: {
+//     marginRight: 19,
+//   },
+// });
