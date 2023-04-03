@@ -1,22 +1,24 @@
 import { useState } from "react";
-import {
+import {  
   StyleSheet,
   Text,
   View,
-  ImageBackground,  
+  ImageBackground,
   TextInput,
-  TouchableOpacity,  
+  TouchableOpacity,
   Platform,
   KeyboardAvoidingView,
-  Keyboard,
+  Keyboard, 
   TouchableWithoutFeedback,  
 } from "react-native";
+
+import { authSignIn } from "../../redux/auth/authOperations";
+import { useDispatch } from "react-redux";
 
 export default function LoginScreen({ navigation }) {
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
   const [isSecurePassword, setIsSecurePassword] = useState(true);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
   const [isFocusedPass, setIsFocusedPass] = useState(false);
@@ -24,14 +26,15 @@ export default function LoginScreen({ navigation }) {
   const emailHandler = (text) => setEmail(text);
   const passwordHandler = (text) => setPassword(text);
 
+  const dispatch = useDispatch();
+
   const onSubmit = () => {
     const userData = { email, password };
     console.log(userData);
-
+    dispatch(authSignIn(userData));
     setEmail("");
     setPassword("");
-    keyboardHide();
-    navigation.navigate("Main");
+    keyboardHide();    
   };
 
   const keyboardHide = () => {
@@ -44,7 +47,7 @@ export default function LoginScreen({ navigation }) {
       <View style={styles.container}>
         <ImageBackground
           style={styles.image}
-          source={require("../../assets/PhotoBG.png")}
+          source={require("../../assets/img/PhotoBG.png")}
         >
           <KeyboardAvoidingView
             behavior={Platform.OS == "ios" && "padding"}
@@ -63,7 +66,7 @@ export default function LoginScreen({ navigation }) {
                   style={{
                     ...styles.input,
                     borderColor: isFocusedEmail ? "#FF6C00" : "#E8E8E8",
-                  }}
+                  }}                  
                   onFocus={() => {
                     setIsShowKeyboard(true), setIsFocusedEmail(true);
                   }}
@@ -79,6 +82,7 @@ export default function LoginScreen({ navigation }) {
                       ...styles.input,
                       borderColor: isFocusedPass ? "#FF6C00" : "#E8E8E8",
                     }}
+                                        
                     onFocus={() => {
                       setIsShowKeyboard(true), setIsFocusedPass(true);
                     }}
@@ -87,7 +91,7 @@ export default function LoginScreen({ navigation }) {
                     value={password}
                     secureTextEntry={isSecurePassword}
                     placeholder={"Пароль"}
-                    placeholderTextColor={"#BDBDBD"}                   
+                    placeholderTextColor={"#BDBDBD"}
                   />
                   <TouchableOpacity
                     style={styles.bthShowWrap}
@@ -140,7 +144,7 @@ const styles = StyleSheet.create({
     resizeMode: "cover",
     justifyContent: "flex-end",
   },
-  form: {    
+  form: {
     position: "relative",
     backgroundColor: "#fff",
     paddingLeft: 16,
@@ -149,6 +153,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
   },
+
   formTitle: {
     fontFamily: "Roboto-Medium",
     fontSize: 30,
@@ -158,6 +163,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
+
   input: {
     backgroundColor: "#F6F6F6",
     borderWidth: 1,
@@ -182,6 +188,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: "#1B4371",
   },
+
   btn: {
     backgroundColor: "#FF6C00",
     borderRadius: 100,

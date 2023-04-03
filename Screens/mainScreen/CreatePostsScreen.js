@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
 import {
   Text,
   View,
@@ -6,32 +7,69 @@ import {
   StyleSheet,
   TouchableOpacity,  
   Alert,
-  TextInput
+  TextInput,
 } from "react-native";
-
 import { Camera } from "expo-camera";
 import * as Location from "expo-location";
+import { storage, database } from "../../firebase/config";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { ref as refDb, set, push } from "firebase/database";
 
 const CreatePostScreen = ({ navigation }) => {
+  // const [hasPermission, setHasPermission] = useState(null);
   const [camera, setCamera] = useState(null);
   const [photo, setPhoto] = useState("");
+  const [message, setMessage] = useState("");
+  const [location, setLocation] = useState("");
+  const [locationMessage, setLocationMessage] = useState("");
+
+  const { userId, login } = useSelector((state) => state.auth);
 
   const takePhoto = React.useCallback(async () => {
     const photo = await camera.takePictureAsync();
-    const location = await Location.getCurrentPositionAsync();
-    // console.log("latitude", location.coords.latitude);
-    // console.log("longitude", location.coords.longitude);
-    
+    const locationPhoto = await Location.getCurrentPositionAsync();
+    setLocation(locationPhoto);
+    console.log(locationPhoto);
     console.log(photo.uri);
-    console.log(location);    
     setPhoto(photo.uri);
-  }); 
+  });
 
   const sendPhoto = () => {
-    // console.log("navigation", navigation);
-    if (photo)
-      navigation.navigate("DefaultScreen", { photo }
+    uploadPostToServer();
+    setMessage("");
+    setPhoto("");
+    setLocationMessage("");
+    navigation.navigate("DefaultScreen");
+  };
+
+  const uploadPhotoToServer = async () => {
+    const response = await fetch(photo);
+    const file = await response.blob();
+    const uniquePostId = Date.now().toString();
+
+    const storageRef = await ref(storage, `postImage/${uniquePostId}`);
+    await uploadBytes(storageRef, file);
+
+    const processedPhoto = await getDownloadURL(
+      ref(storage, `postImage/${uniquePostId}`)
     );
+
+    return processedPhoto;
+  };
+
+  const uploadPostToServer = async () => {
+    const photo = await uploadPhotoToServer();
+    
+    const postListRef = await refDb(database, "posts/" + userId);
+    const newPostRef = await push(postListRef);
+    await set(newPostRef, {
+      photo,
+      message,
+      location: location.coords,
+      locationMessage,
+      userId,
+      login,
+    });
   };
 
   useEffect(() => {
@@ -49,18 +87,44 @@ const CreatePostScreen = ({ navigation }) => {
     <View style={styles.container}>
       <View style={styles.cameraWrap}>
         <Camera style={styles.camera} ref={setCamera}>
+          {photo && (
+            <View style={styles.takePhotoWrap}>
+              <Image
+                source={{ uri: photo }}
+                style={{ height: 100, width: 150, borderRadius: 10 }}
+              />
+            </View>
+          )}
           <TouchableOpacity
             style={styles.snapWrap}
             activeOpacity={0.6}
             onPress={takePhoto}
           >
-            <Image source={require("../../assets/camera.png")} />
+            <Image source={require("../../assets/img/camera.png")} />
           </TouchableOpacity>
-        </Camera>        
+        </Camera>
       </View>
-
-      <TouchableOpacity style={styles.btn} onPress={sendPhoto} 
-        activeOpacity={0.8}       
+      <View style={styles.inputContainer}>
+        <TextInput
+          style={styles.input}
+          placeholder={"Название..."}
+          placeholderTextColor={"#BDBDBD"}
+          value={message}
+          onChangeText={setMessage}
+        />
+        <TextInput
+          style={styles.input}
+          placeholder={"Местность..."}
+          placeholderTextColor={"#BDBDBD"}
+          value={locationMessage}
+          onChangeText={setLocationMessage}
+        />
+      </View>
+      <TouchableOpacity
+        activeOpacity={0.8}
+        style={locationMessage && photo && message ? styles.btn : styles.disBtn}
+        disabled={locationMessage && photo && message ? false : true}
+        onPress={sendPhoto}
       >
         <Text style={styles.btnText}>Опубликовать</Text>
       </TouchableOpacity>
@@ -78,12 +142,22 @@ const styles = StyleSheet.create({
     marginTop: 32,
     borderRadius: 8,
     overflow: "hidden",
+    marginBottom: 32,
   },
   camera: {
     height: 240,
     justifyContent: "center",
     alignItems: "center",
   },
+  takePhotoWrap: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    borderColor: "#fff",
+    borderWidth: 1,
+    borderRadius: 10,
+  },
+
   snapWrap: {
     justifyContent: "center",
     alignItems: "center",
@@ -96,13 +170,30 @@ const styles = StyleSheet.create({
     backgroundColor: "#FF6C00",
     borderRadius: 100,
     padding: 16,
-    marginTop: 43,
+    marginTop: 16,
+    alignItems: "center",
+  },
+  disBtn: {
+    backgroundColor: "#BDBDBD",
+    borderRadius: 100,
+    padding: 16,
+    marginTop: 16,
     alignItems: "center",
   },
   btnText: {
     color: "#FFFFFF",
-  }, 
+  },
+  inputContainer: {},
+  input: {
+    borderBottomWidth: 1,
+    borderBottomColor: "#E8E8E8",
+    marginBottom: 16,
+
+    fontFamily: "Roboto-Regular",
+    fontSize: 16,
+    color: "#212121",
+    height: 50,
+  },
 });
 
 export default CreatePostScreen;
-

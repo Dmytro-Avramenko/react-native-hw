@@ -5,7 +5,7 @@ import {
   View,
   ImageBackground,
   TextInput,
-  Image, 
+  Image,  
   TouchableOpacity,  
   Platform,
   KeyboardAvoidingView,
@@ -14,30 +14,34 @@ import {
   Dimensions,
 } from "react-native";
 
+import { authSignUp } from "../../redux/auth/authOperations";
+import { useDispatch } from "react-redux";
+
 export default function RegistrationScreen({ navigation }) {
   const [isShowKeyboard, setIsShowKeyboard] = useState(false);
+  const [login, setLogin] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [login, setLogin] = useState("");
-
   const [isSecurePassword, setIsSecurePassword] = useState(true);
+  const [isFocusedLogin, setIsFocusedLogin] = useState(false);
   const [isFocusedEmail, setIsFocusedEmail] = useState(false);
   const [isFocusedPass, setIsFocusedPass] = useState(false);
-  const [isFocusedLogin, setIsFocusedLogin] = useState(false);
 
+  const loginHandler = (text) => setLogin(text);
   const emailHandler = (text) => setEmail(text);
   const passwordHandler = (text) => setPassword(text);
-  const loginHandler = (text) => setLogin(text);
+
+  const dispatch = useDispatch();
 
   const onSubmit = () => {
-    const userData = { email, password, login };
+    const userData = { login, email, password };
     console.log(userData);
-
+    
+    dispatch(authSignUp(userData));
     setLogin("");
     setEmail("");
     setPassword("");
-    keyboardHide();
-    navigation.navigate("Main");
+    keyboardHide();    
   };
 
   const keyboardHide = () => {
@@ -50,14 +54,14 @@ export default function RegistrationScreen({ navigation }) {
       <View style={styles.container}>
         <ImageBackground
           style={styles.image}
-          source={require("../../assets/PhotoBG.png")}
+          source={require("../../assets/img/PhotoBG.png")}
         >
           <KeyboardAvoidingView behavior={Platform.OS == "ios" && "padding"}>
             <View style={styles.form}>
-              <View style={styles.avatar}>
+              <View style={styles.avatarWrapper}>
                 <Image
                   style={styles.addIcon}
-                  source={require("../../assets/add.png")}
+                  source={require("../../assets/img/add.png")}
                 />
               </View>
               <View style={styles.wrapper}>
@@ -68,52 +72,52 @@ export default function RegistrationScreen({ navigation }) {
                   style={{
                     ...styles.input,
                     borderColor: isFocusedLogin ? "#FF6C00" : "#E8E8E8",
-                  }}                 
+                  }}
+                  value={login}
+                  placeholder={"Логин"}
+                  placeholderTextColor={"#BDBDBD"}
                   onFocus={() => {
                     setIsShowKeyboard(true), setIsFocusedLogin(true);
                   }}
                   onBlur={() => setIsFocusedLogin(false)}
                   onChangeText={loginHandler}
-                  value={login}
-                  placeholder={"Логин"}
-                  placeholderTextColor={"#BDBDBD"}
                 />
                 <TextInput
                   style={{
                     ...styles.input,
                     borderColor: isFocusedEmail ? "#FF6C00" : "#E8E8E8",
                   }}
+                  value={email}
+                  placeholder={"Адрес электронной почты"}
+                  placeholderTextColor={"#BDBDBD"}
                   onFocus={() => {
                     setIsShowKeyboard(true), setIsFocusedEmail(true);
                   }}
                   onBlur={() => setIsFocusedEmail(false)}
                   onChangeText={emailHandler}
-                  value={email}
-                  placeholder={"Адрес электронной почты"}
-                  placeholderTextColor={"#BDBDBD"}
                 />
-                <View style={styles.passWrap}>
+                <View style={styles.passInpWrap}>
                   <TextInput
                     style={{
                       ...styles.input,
                       borderColor: isFocusedPass ? "#FF6C00" : "#E8E8E8",
-                    }}                    
+                    }}
+                    value={password}
+                    placeholder={"Пароль"}
+                    placeholderTextColor={"#BDBDBD"}
                     secureTextEntry={isSecurePassword}
                     onFocus={() => {
                       setIsShowKeyboard(true), setIsFocusedPass(true);
                     }}
                     onBlur={() => setIsFocusedPass(false)}
                     onChangeText={passwordHandler}
-                    value={password}
-                    placeholder={"Пароль"}
-                    placeholderTextColor={"#BDBDBD"}
                   />
                   <TouchableOpacity
-                    style={styles.bthShowWrap}
+                    style={styles.showPassBtnWrap}
                     activeOpacity={0.5}
                     onPress={() => setIsSecurePassword(!isSecurePassword)}
                   >
-                    <Text style={styles.btnShowPass}>
+                    <Text style={styles.showPassBtn}>
                       {isSecurePassword ? "Показать" : "Скрыть"}
                     </Text>
                   </TouchableOpacity>
@@ -126,7 +130,7 @@ export default function RegistrationScreen({ navigation }) {
                   }}
                   onPress={onSubmit}
                 >
-                  <Text style={styles.btnText}>Зарегистрироваться</Text>
+                  <Text style={styles.textBtn}>Зарегистрироваться</Text>
                 </TouchableOpacity>
               </View>
 
@@ -136,7 +140,7 @@ export default function RegistrationScreen({ navigation }) {
                   style={styles.wrapper}
                   onPress={() => navigation.navigate("Login")}
                 >
-                  <Text style={styles.linkLogin}>
+                  <Text style={styles.linkToLogin}>
                     Уже есть аккаунт? Войти
                   </Text>
                 </TouchableOpacity>
@@ -160,6 +164,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   form: {
+    // marginHorizontal: 16,
     position: "relative",
     backgroundColor: "#fff",
     paddingLeft: 16,
@@ -168,7 +173,8 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 25,
     borderTopRightRadius: 25,
   },
-  avatar: {
+
+  avatarWrapper: {
     position: "absolute",
     right: Dimensions.get("window").width / 2 - 60,
     top: -60,
@@ -177,6 +183,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#F6F6F6",
     borderRadius: 16,
   },
+
   addIcon: {
     position: "absolute",
     right: -12,
@@ -185,7 +192,8 @@ const styles = StyleSheet.create({
     height: 25,
     resizeMode: "stretch",
   },
-  formTitle: {    
+
+  formTitle: {
     fontFamily: "Roboto-Medium",
     fontSize: 30,
   },
@@ -194,6 +202,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     marginBottom: 16,
   },
+
   input: {
     backgroundColor: "#F6F6F6",
     borderWidth: 1,
@@ -205,19 +214,23 @@ const styles = StyleSheet.create({
     marginTop: 16,
     padding: 16,
   },
-  passWrap: {
+
+  passInpWrap: {
     position: "relative",
   },
-  bthShowWrap: {
+
+  showPassBtnWrap: {
     position: "absolute",
     right: 16,
     top: 29,
   },
-  btnShowPass: {
+
+  showPassBtn: {
     fontFamily: "Roboto-Regular",
     fontSize: 16,
     color: "#1B4371",
   },
+
   btn: {
     backgroundColor: "#FF6C00",
     borderRadius: 100,
@@ -225,12 +238,11 @@ const styles = StyleSheet.create({
     marginTop: 43,
     alignItems: "center",
   },
-  btnText: {
+  textBtn: {
     color: "#FFFFFF",
   },
-  linkLogin: {
+  linkToLogin: {
     fontSize: 16,
     color: "#1B4371",
   },
 });
-

@@ -1,16 +1,19 @@
 import React from "react";
 import { createStackNavigator } from "@react-navigation/stack";
-
-import DefaultPostsScreen from "../nestedScreens/DefaultScreenPosts";
-import CommentsScreen from "../nestedScreens/CommentsScreen";
-import MapScreen from "../nestedScreens/MapScreen";
-
+import DefaultPostsScreen from "../postedScreens/DefaultPostsScreen";
+import CommentsScreen from "../postedScreens/CommentsScreen";
+import MapScreen from "../postedScreens/MapScreen";
 import { Image, StyleSheet, TouchableOpacity } from "react-native";
+import { useDispatch } from "react-redux";
+import { authSignOut } from "../../redux/auth/authOperations";
 
 const PostedScreen = createStackNavigator();
-// const NestedScreen = createStackNavigator();
 
-const PostsScreen = ({ navigation }) => {
+const PostsScreen = () => {
+  const dispatch = useDispatch();
+  const signOut = () => {
+    dispatch(authSignOut());
+  };
   return (
     <PostedScreen.Navigator>
       <PostedScreen.Screen
@@ -21,17 +24,15 @@ const PostsScreen = ({ navigation }) => {
           headerTitleAlign: "center",
 
           headerRight: () => (
-            <TouchableOpacity
-              style={styles.logOutBtn}
-              onPress={() => navigation.navigate("Login")}
-            >
-              <Image source={require("../../assets/logOut.png")} />
+            <TouchableOpacity style={styles.logOutBtn} onPress={signOut}>
+              <Image source={require("../../assets/img/logOut.png")} />
             </TouchableOpacity>
           ),
+
           headerLeft: () => null,
         }}
       />
-
+      
       <PostedScreen.Screen
         name="Comments"
         component={CommentsScreen}

@@ -8,23 +8,16 @@ import {
   Image,
   TouchableOpacity,
 } from "react-native";
-import { useDispatch } from "react-redux";
-import { authSignOut } from "../../redux/auth/authOperations";
 
-import { ref, onValue, get } from "firebase/database";
+import { ref, onValue } from "firebase/database";
 import { database } from "../../firebase/config";
 
-const ProfileScreen = ({ route, navigation }) => {
+const DefaultPostsScreen = ({ route, navigation }) => {
   const [posts, setPosts] = useState([]);
-  const dispatch = useDispatch();
-  const signOut = () => {
-    dispatch(authSignOut());
-  };
-
-  const { userId, login } = useSelector((state) => state.auth);
+  const { login, email } = useSelector((state) => state.auth);
 
   const getAllPosts = async () => {
-    const postsRef = await ref(database, "posts/" + userId);
+    const postsRef = await ref(database, "posts");
 
     onValue(
       postsRef,
@@ -32,29 +25,36 @@ const ProfileScreen = ({ route, navigation }) => {
         setPosts([]);
 
         snapshot.forEach((childSnapshot) => {
-          const childKey = childSnapshot.key;
-          const childData = childSnapshot.val();
+          const userId = childSnapshot.key;
+          const userPostsRef = ref(database, `posts/${userId}`);
 
-          const commentsSnapshot = childSnapshot.child("comments");
-          console.log("commentsSnapshot", commentsSnapshot.val());
+          onValue(userPostsRef, (postsSnapshot) => {
+            postsSnapshot.forEach((postSnapshot) => {
+              const childKey = postSnapshot.key;
+              const childData = postSnapshot.val();
 
-          let count = 0;
+              let count = 0;
 
-          const postRef = ref(database, `posts/${userId}/${childKey}/comments`);
+              const postComRef = ref(
+                database,
+                `posts/${userId}/${childKey}/comments`
+              );
+              onValue(postComRef, (snapshot) => {
+                snapshot.forEach((childSnapshot) => {
+                  const childData = childSnapshot.val();
+                  // comments.push(childData);
+                  if (childData) {
+                    count += 1;
+                  }
+                });
+              });
 
-          onValue(postRef, (snapshot) => {
-            snapshot.forEach((childSnapshot) => {
-              const childData = childSnapshot.val();
-              if (childData) {
-                count += 1;
-              }
+              setPosts((state) => [
+                ...state,
+                { postId: childKey, ...childData, count },
+              ]);
             });
-          });         
-
-          setPosts((state) => [
-            ...state,
-            { postId: childKey, ...childData, count },
-          ]);
+          });
         });
       },
       {
@@ -73,10 +73,8 @@ const ProfileScreen = ({ route, navigation }) => {
         <View style={styles.userFotoWrap}></View>
         <View style={styles.userTextWrap}>
           <Text style={styles.userLogin}>{login}</Text>
+          <Text style={styles.userEmail}>{email}</Text>
         </View>
-        <TouchableOpacity style={styles.logOutBtn} onPress={signOut}>
-          <Image source={require("../../assets/img/logOut.png")} />
-        </TouchableOpacity>
       </View>
       <FlatList
         data={posts}
@@ -105,7 +103,7 @@ const ProfileScreen = ({ route, navigation }) => {
               <TouchableOpacity
                 style={styles.locationInfo}
                 onPress={() => {
-                  navigation.navigate("Map", { photo: item.photo });
+                  navigation.navigate("Map", { location: item.location });
                 }}
               >
                 <Image source={require("../../assets/img/map-pin.png")} />
@@ -129,27 +127,27 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
   },
   userInfo: {
-    marginBottom: 16,
-
+    marginBottom: 32,
+    flexDirection: "row",
     alignItems: "center",
   },
   userFotoWrap: {
-    width: 120,
-    height: 120,
+    width: 60,
+    height: 60,
     backgroundColor: "#212121",
     borderRadius: 16,
-    marginBottom: 16,
+    marginRight: 8,
   },
-
   userTextWrap: {},
   userLogin: {
-    fontFamily: "Roboto-Medium",
-    fontSize: 30,
+    fontFamily: "Roboto-Bold",
+    fontSize: 13,
     color: "#212121",
   },
-  logOutBtn: {
-    position: "absolute",
-    right: 16,
+  userEmail: {
+    fontFamily: "Roboto-Regular",
+    fontSize: 11,
+    color: "rgba(33, 33, 33, 0.8)",
   },
   postWrap: {
     marginBottom: 32,
@@ -182,4 +180,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default ProfileScreen;
+export default DefaultPostsScreen;
